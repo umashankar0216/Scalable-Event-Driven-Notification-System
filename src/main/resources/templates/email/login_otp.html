@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body style="font-family: sans-serif; padding: 20px;">
+<h2>Security Verification</h2>
+<p>Hi <span th:text="${userName}">User</span>,</p>
+<p>Your one-time passcode is:</p>
+<h1 style="letter-spacing: 4px; color: #16a34a;" th:text="${otp}">000000</h1>
+<p>This code expires in 10 minutes.</p>
+</body>
+</html>

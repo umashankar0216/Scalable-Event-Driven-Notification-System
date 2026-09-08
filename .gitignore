@@ -1,0 +1,33 @@
+# Compiled build artifacts
+target/
+build/
+bin/
+*.class
+
+# IDE & Editor files
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.settings/
+.project
+.classpath
+.factorypath
+.apt_generated
+.springBeans
+.sts4-cache
+nbproject/
+
+# Local credentials & secret files
+*.env
+application-local.properties
+application-local.yml
+application-secret.properties
+
+# Log files
+*.log
+logs/
+
+# Maven Wrapper
+.mvn/wrapper/maven-wrapper.jar
