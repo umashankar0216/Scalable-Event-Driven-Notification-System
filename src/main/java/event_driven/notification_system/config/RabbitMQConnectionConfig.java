@@ -11,13 +11,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConnectionConfig {
 
-//    @Bean
-//    @SuppressWarnings("deprecation")
-//    public MessageConverter jsonMessageConverter() {
-//        Jackson2JsonMessageConverter converter = new Jackson2JsonMessageConverter();
-//        converter.setCreateMessageIds(true);
-//        return converter;
-//    }
+
 
     @Bean
     public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory, MessageConverter jsonMessageConverter) {
