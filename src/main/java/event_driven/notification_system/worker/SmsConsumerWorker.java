@@ -75,7 +75,6 @@ public class SmsConsumerWorker {
                 log.info("SMS delivered successfully! Twilio SID: {}", message.getSid());
                 delivered = true;
 
-                // 3. Mark DELIVERED in Supabase & ACK RabbitMQ message
                 updateNotificationLog(payload.getNotificationLogId(), "DELIVERED", currentAttempt, null);
                 channel.basicAck(deliveryTag, false);
 
@@ -107,5 +106,4 @@ public class SmsConsumerWorker {
             logRepository.save(logEntry);
         });
     }
-
 }
