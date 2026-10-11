@@ -86,7 +86,6 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(inAppQueue()).to(userEventsExchange()).with("notification.in_app.#");
     }
 
-    // 7. Message Converter for JSON Serialization/Deserialization
     @Bean
     public MessageConverter jsonMessageConverter() {
         return new JacksonJsonMessageConverter();
