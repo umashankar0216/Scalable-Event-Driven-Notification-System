@@ -65,7 +65,7 @@ public class SmsConsumerWorker {
 
                 String messageBody = "Your verification code is: " + otp;
 
-                // 2. Dispatch SMS via Twilio SDK
+
                 Message message = Message.creator(
                         new PhoneNumber(payload.getRecipient()),
                         new PhoneNumber(twilioPhoneNumber),
