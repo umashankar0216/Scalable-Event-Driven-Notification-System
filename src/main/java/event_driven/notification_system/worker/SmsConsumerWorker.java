@@ -5,7 +5,6 @@ import com.twilio.Twilio;
 import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.type.PhoneNumber;
 import event_driven.notification_system.dtos.NotificationEventPayload;
-import event_driven.notification_system.entities.NotificationLog;
 import event_driven.notification_system.repository.NotificationLogRepository;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
@@ -17,6 +16,12 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 
 @Component
 public class SmsConsumerWorker {
@@ -32,7 +37,11 @@ public class SmsConsumerWorker {
     @Value("${twilio.phone-number}")
     private String twilioPhoneNumber;
 
+    @Value("${fast2sms.api-key}")
+    private String fast2SmsApiKey;
+
     private final NotificationLogRepository logRepository;
+    private final HttpClient httpClient = HttpClient.newHttpClient();
 
     public SmsConsumerWorker(NotificationLogRepository logRepository) {
         this.logRepository = logRepository;
@@ -58,23 +67,23 @@ public class SmsConsumerWorker {
             try {
                 currentAttempt++;
 
-                // 1. Build SMS body from metadata
+                // Extract OTP from metadata
                 String otp = (payload.getMetadata() != null && payload.getMetadata().containsKey("otp"))
                         ? String.valueOf(payload.getMetadata().get("otp"))
-                        : "";
+                        : "000000";
 
-                String messageBody = "Your verification code is: " + otp;
+                String recipient = payload.getRecipient();
 
+                // Route: Indian numbers (+91) → Fast2SMS, others → Twilio
+                if (isIndianNumber(recipient)) {
+                    sendViaFast2Sms(recipient, otp);
+                    log.info("SMS delivered successfully via Fast2SMS to: {}", recipient);
+                } else {
+                    sendViaTwilio(recipient, otp);
+                    log.info("SMS delivered successfully via Twilio to: {}", recipient);
+                }
 
-                Message message = Message.creator(
-                        new PhoneNumber(payload.getRecipient()),
-                        new PhoneNumber(twilioPhoneNumber),
-                        messageBody
-                ).create();
-
-                log.info("SMS delivered successfully! Twilio SID: {}", message.getSid());
                 delivered = true;
-
                 updateNotificationLog(payload.getNotificationLogId(), "DELIVERED", currentAttempt, null);
                 channel.basicAck(deliveryTag, false);
 
@@ -83,7 +92,6 @@ public class SmsConsumerWorker {
                         currentAttempt, payload.getNotificationLogId(), ex.getMessage());
 
                 if (currentAttempt >= maxRetries) {
-                    // Update log to FAILED and route to Dead-Letter Queue (DLQ)
                     updateNotificationLog(payload.getNotificationLogId(), "FAILED", currentAttempt, ex.getMessage());
                     channel.basicNack(deliveryTag, false, false);
                     log.error("Max retries exceeded for SMS. Message routed to DLQ.");
@@ -95,6 +103,62 @@ public class SmsConsumerWorker {
                 }
             }
         }
+    }
+
+    /**
+     * Sends SMS via Fast2SMS Quick Route — no DLT registration required.
+     * Works for all Indian (+91) numbers.
+     */
+    private void sendViaFast2Sms(String recipient, String otp) throws Exception {
+        // Strip country code — Fast2SMS expects 10-digit mobile number
+        String mobile = recipient.startsWith("+91") ? recipient.substring(3)
+                      : recipient.startsWith("91") && recipient.length() == 12 ? recipient.substring(2)
+                      : recipient;
+
+        String message = URLEncoder.encode("Your OTP is: " + otp + ". Valid for 10 minutes.", StandardCharsets.UTF_8);
+
+        String url = "https://www.fast2sms.com/dev/bulkV2"
+                + "?authorization=" + fast2SmsApiKey
+                + "&route=q"
+                + "&message=" + message
+                + "&numbers=" + mobile;
+
+        log.info("Sending SMS via Fast2SMS to mobile: {}", mobile);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("Accept", "application/json")
+                .GET()
+                .build();
+
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        log.info("Fast2SMS response [{}]: {}", response.statusCode(), response.body());
+
+        if (response.statusCode() != 200 || response.body().contains("\"return\":false")) {
+            throw new RuntimeException("Fast2SMS delivery failed: " + response.body());
+        }
+    }
+
+    /**
+     * Sends SMS via Twilio — used for international (non-Indian) numbers.
+     */
+    private void sendViaTwilio(String recipient, String otp) {
+        String messageBody = "Your OTP is: " + otp + ". Valid for 10 minutes.";
+        Message message = Message.creator(
+                new PhoneNumber(recipient),
+                new PhoneNumber(twilioPhoneNumber),
+                messageBody
+        ).create();
+        log.info("Twilio SMS SID: {}", message.getSid());
+    }
+
+    /**
+     * Returns true if the phone number is an Indian number (+91 or 91 prefix with 12 digits).
+     */
+    private boolean isIndianNumber(String phoneNumber) {
+        return phoneNumber != null &&
+               (phoneNumber.startsWith("+91") || (phoneNumber.startsWith("91") && phoneNumber.length() == 12));
     }
 
     private void updateNotificationLog(java.util.UUID logId, String status, int retries, String errorLog) {
