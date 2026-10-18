@@ -39,7 +39,7 @@ class ExternalSmsClientWireMockTest {
     @Autowired
     private SmsConsumerWorker smsConsumerWorker;
 
-    // FIX: Use @MockBean so Spring injects this mock into SmsConsumerWorker
+
     @MockitoBean
     private NotificationLogRepository logRepository;
 
