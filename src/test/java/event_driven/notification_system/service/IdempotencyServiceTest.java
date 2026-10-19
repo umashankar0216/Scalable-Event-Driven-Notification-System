@@ -46,10 +46,10 @@ class IdempotencyServiceTest {
         when(valueOperations.setIfAbsent(eq(expectedRedisKey), eq("LOCKED"), any(Duration.class)))
                 .thenReturn(Boolean.TRUE);
 
-        // Act
+
         boolean result = idempotencyService.lockKey(key);
 
-        // Assert
+
         assertTrue(result, "Expected lockKey to return true for a new unique key");
     }
 
@@ -62,10 +62,9 @@ class IdempotencyServiceTest {
         when(valueOperations.setIfAbsent(eq(expectedRedisKey), eq("LOCKED"), any(Duration.class)))
                 .thenReturn(Boolean.FALSE);
 
-        // Act
+
         boolean result = idempotencyService.lockKey(key);
 
-        // Assert
         assertFalse(result, "Expected lockKey to return false when key is already taken");
     }
 }
