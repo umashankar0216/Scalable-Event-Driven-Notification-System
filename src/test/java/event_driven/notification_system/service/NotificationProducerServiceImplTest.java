@@ -78,7 +78,7 @@ class NotificationProducerServiceImplTest {
         // 2. Act
         boolean outcome = producerService.processAndPublish(request);
 
-        // 3. Assert & Verify
+       
         assertTrue(outcome);
 
         // Verify entity was saved as PENDING
