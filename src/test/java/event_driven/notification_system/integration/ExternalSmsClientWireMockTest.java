@@ -28,7 +28,7 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @TestPropertySource(properties = {
-        // Redirects Fast2SMS HTTP calls to WireMock port 8089
+
         "fast2sms.base-url=http://localhost:8089/dev/bulkV2",
         "fast2sms.api-key=test_wiremock_key"
 })
