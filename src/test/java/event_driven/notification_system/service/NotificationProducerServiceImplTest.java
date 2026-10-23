@@ -75,7 +75,7 @@ class NotificationProducerServiceImplTest {
             return log;
         });
 
-        // 2. Act
+
         boolean outcome = producerService.processAndPublish(request);
 
        
