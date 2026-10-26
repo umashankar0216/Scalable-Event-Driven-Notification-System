@@ -46,7 +46,6 @@ class IdempotencyServiceTest {
         when(valueOperations.setIfAbsent(eq(expectedRedisKey), eq("LOCKED"), any(Duration.class)))
                 .thenReturn(Boolean.TRUE);
 
-
         boolean result = idempotencyService.lockKey(key);
 
 
