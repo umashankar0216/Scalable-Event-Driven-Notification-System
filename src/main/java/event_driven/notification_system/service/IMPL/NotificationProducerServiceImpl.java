@@ -46,7 +46,7 @@ public class NotificationProducerServiceImpl implements NotificationProducerServ
             log.setMetadata(request.getMetadata());
             NotificationLog savedLog = logRepository.saveAndFlush(log);
 
-            // 3. Prepare payload for the message broker
+
             NotificationEventPayload payload = new NotificationEventPayload();
             payload.setNotificationLogId(savedLog.getId());
             payload.setUserId(savedLog.getUserId());
