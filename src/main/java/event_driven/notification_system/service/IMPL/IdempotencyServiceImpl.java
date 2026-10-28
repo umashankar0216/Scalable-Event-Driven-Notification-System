@@ -17,10 +17,7 @@ public class IdempotencyServiceImpl implements IdempotencyService {
         this.redisTemplate = redisTemplate;
     }
 
-    /**
-     * Checks if key exists. If not, stores it with 24-hour TTL and returns true.
-     * If key already exists, returns false (duplicate request).
-     */
+
     public boolean lockKey(String idempotencyKey) {
         String redisKey = "idemp:" + idempotencyKey;
         try {
