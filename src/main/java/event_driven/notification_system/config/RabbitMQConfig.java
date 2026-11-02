@@ -80,7 +80,6 @@ public class RabbitMQConfig {
     public Binding smsBinding() {
         return BindingBuilder.bind(smsQueue()).to(userEventsExchange()).with("notification.sms.#");
     }
-
     @Bean
     public Binding inAppBinding() {
         return BindingBuilder.bind(inAppQueue()).to(userEventsExchange()).with("notification.in_app.#");
